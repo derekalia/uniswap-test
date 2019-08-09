@@ -13,6 +13,9 @@ contract("Uniswap Tests", async accounts => {
     //deploy exchange
     let uniswapExchangeInstance = await UniswapExchange.new();
 
+    console.log("uniswapExchangeInstance.address");
+    console.log(uniswapExchangeInstance.address);
+
     //deploy factory
     let uniswapFactoryContract = await UniswapFactory.new(
       uniswapExchangeInstance.address
@@ -25,10 +28,15 @@ contract("Uniswap Tests", async accounts => {
     //set up token exchange
     await uniswapFactoryContract.createExchange(tokenContract.address);
 
+    console.log("tokenContract.address");
+    console.log(tokenContract.address);
+
     //get token exchange address
     let exchangeAddress = await uniswapFactoryContract.getExchange(
       tokenContract.address
     );
+
+    console.log({ exchangeAddress });
 
     //mint 1500000000 tokens
     await tokenContract.mint(bob, 1500000000);
@@ -41,16 +49,48 @@ contract("Uniswap Tests", async accounts => {
     let blockInfo = await web3.eth.getBlock(block);
     console.log(blockInfo.timestamp);
 
-    let tx = await uniswapExchangeInstance.addLiquidity(
-      1000000000,
-      1000000000,
-      blockInfo.timestamp + 300,
-      { value: 1000000000, from: bob }
+    let checkFactory = await uniswapExchangeInstance.factory();
+    console.log({ checkFactory });
+
+    let checkToken = await uniswapExchangeInstance.token();
+    console.log({ checkToken });
+
+    console.log({ exchangeAddress });
+
+    let token_exchange = new web3.eth.Contract(
+      UniswapExchange.abi,
+      exchangeAddress
     );
+
+    console.log("token_exchange.address");
+    console.log(token_exchange._address);
+
+    // HAY_exchange = ConciseContract(w3.eth.contract(address=HAY_exchange_address, abi=exchange_abi))
+    // assert factory.getToken(HAY_exchange.address) == HAY_token.address
+    // assert factory.tokenCount() == 1
+
+    // let getAddress = await uniswapFactoryContract.getToken(
+    //   token_exchange.address
+    // );
+
+    // console.log("getAddress");
+    // console.log(getAddress);
+    // console.log("tokenContract.address");
+    // console.log(tokenContract.address);
+
+    let checkExchangeFactory = await token_exchange.methods.factory();
+    console.log({ checkExchangeFactory });
+
+    let checkExchangeToken = await token_exchange.methods.token();
+    console.log({ checkExchangeToken });
+
+    let tx = await token_exchange.methods
+      .addLiquidity(0, 1000000000, blockInfo.timestamp + 300)
+      .send({ value: 5 * 10 ** 18, from: bob, gasLimit: 200000 });
 
     console.log({ tx });
 
-    let tokenCount = await uniswapFactoryContract.tokenCount();
+    let tokenCount = await token_exchange.methods.tokenCount();
     assert.equal(
       Number(tokenCount.toString()) == 1000000000,
       true,
