@@ -57,13 +57,10 @@ contract("Uniswap Tests", async accounts => {
 
     console.log({ exchangeAddress });
 
-    let token_exchange = new web3.eth.Contract(
-      UniswapExchange.abi,
-      exchangeAddress
-    );
+    let token_exchange = await UniswapExchange.at(exchangeAddress);
 
     console.log("token_exchange.address");
-    console.log(token_exchange._address);
+    console.log(token_exchange.address);
 
     // HAY_exchange = ConciseContract(w3.eth.contract(address=HAY_exchange_address, abi=exchange_abi))
     // assert factory.getToken(HAY_exchange.address) == HAY_token.address
@@ -73,24 +70,22 @@ contract("Uniswap Tests", async accounts => {
     //   token_exchange.address
     // );
 
-    // console.log("getAddress");
-    // console.log(getAddress);
-    // console.log("tokenContract.address");
-    // console.log(tokenContract.address);
-
-    let checkExchangeFactory = await token_exchange.methods.factory();
+    let checkExchangeFactory = await token_exchange.factory();
     console.log({ checkExchangeFactory });
 
-    let checkExchangeToken = await token_exchange.methods.token();
+    let checkExchangeToken = await token_exchange.token();
     console.log({ checkExchangeToken });
 
-    let tx = await token_exchange.methods
-      .addLiquidity(0, 1000000000, blockInfo.timestamp + 300)
-      .send({ value: 5 * 10 ** 18, from: bob, gasLimit: 200000 });
+    let tx = await token_exchange.addLiquidity(
+      0,
+      1000000000,
+      blockInfo.timestamp + 300,
+      { value: 5 * 10 ** 18, from: bob, gasLimit: 200000 }
+    );
 
     console.log({ tx });
 
-    let tokenCount = await token_exchange.methods.tokenCount();
+    let tokenCount = await uniswapFactoryContract.tokenCount();
     assert.equal(
       Number(tokenCount.toString()) == 1000000000,
       true,
