@@ -62,14 +62,6 @@ contract("Uniswap Tests", async accounts => {
     console.log("token_exchange.address");
     console.log(token_exchange.address);
 
-    // HAY_exchange = ConciseContract(w3.eth.contract(address=HAY_exchange_address, abi=exchange_abi))
-    // assert factory.getToken(HAY_exchange.address) == HAY_token.address
-    // assert factory.tokenCount() == 1
-
-    // let getAddress = await uniswapFactoryContract.getToken(
-    //   token_exchange.address
-    // );
-
     let checkExchangeFactory = await token_exchange.factory();
     console.log({ checkExchangeFactory });
 
