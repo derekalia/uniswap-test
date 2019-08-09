@@ -59,6 +59,18 @@ contract("Uniswap Tests", async accounts => {
 
     let token_exchange = await UniswapExchange.at(exchangeAddress);
 
+    let t = (await token_exchange.name()) == "Uniswap V2";
+    let t0 = (await token_exchange.symbol()) == "UNI-V2";
+    let t1 = (await token_exchange.decimals()) == 18;
+    let t2 = (await token_exchange.totalSupply()) == 0;
+    let t3 = (await token_exchange.tokenAddress()) == tokenContract.address;
+    let t4 =
+      (await token_exchange.factoryAddress()) == uniswapFactoryContract.address;
+    let t5 = (await web3.eth.getBalance(token_exchange.address)) == 0;
+    let t6 = (await token_exchange.balanceOf(token_exchange.address)) == 0;
+
+    console.log({ t, t0, t1, t2, t3, t4, t5, t6 });
+
     console.log("token_exchange.address");
     console.log(token_exchange.address);
 
@@ -68,16 +80,17 @@ contract("Uniswap Tests", async accounts => {
     let checkExchangeToken = await token_exchange.token();
     console.log({ checkExchangeToken });
 
-    let tx = await token_exchange.addLiquidity(
+    //check tokens before
+
+    await token_exchange.addLiquidity(
       0,
       1000000000,
       blockInfo.timestamp + 300,
       { value: 5 * 10 ** 18, from: bob, gasLimit: 200000 }
     );
 
-    console.log({ tx });
-
-    let tokenCount = await uniswapFactoryContract.tokenCount();
+    //check tokens after
+    let tokenCount = await tokenContract.balanceOf(token_exchange.address);
     assert.equal(
       Number(tokenCount.toString()) == 1000000000,
       true,
