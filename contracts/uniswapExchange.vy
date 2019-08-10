@@ -205,7 +205,7 @@ def tokenToEthInput(tokens_sold: uint256, min_eth: uint256(wei), deadline: times
     eth_bought: uint256 = self.getInputPrice(tokens_sold, token_reserve, as_unitless_number(self.balance))
     wei_bought: uint256(wei) = as_wei_value(eth_bought, 'wei')
     assert wei_bought >= min_eth
-    send(recipient, wei_bought)
+    send(recipient, wei_bought)    
     assert self.token.transferFrom(buyer, self, tokens_sold)
     log.EthPurchase(buyer, tokens_sold, wei_bought)
     return wei_bought

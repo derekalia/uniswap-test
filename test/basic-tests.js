@@ -9,18 +9,14 @@ contract("Uniswap Tests", async accounts => {
   let factory;
   let uniswapExchangeInstance;
   let tokenContract;
-  let token_exchange_address;
+  let tokenExchange;
 
-  it("setup contracts", async () => {
+  it("setup contracts and add liquidity", async () => {
     //token contract
     tokenContract = await ERC20X.new();
-    //token contract
 
     //deploy exchange
     uniswapExchangeInstance = await UniswapExchange.new();
-
-    console.log("uniswapExchangeInstance.address");
-    console.log(uniswapExchangeInstance.address);
 
     //deploy factory
     factory = await UniswapFactory.new();
@@ -34,53 +30,45 @@ contract("Uniswap Tests", async accounts => {
     await factory.createExchange(tokenContract.address);
 
     //get token exchange address
-    let exchangeAddress = await factory.getExchange(tokenContract.address);
-    console.log({ exchangeAddress });
+    let exchangeAddress = await factory.getExchange(tokenContract.address);    
+
+    //create token exchange
+    tokenExchange = await UniswapExchange.at(exchangeAddress);
+
+    assert.equal((await tokenExchange.decimals()) == 18, true,'should be 18 decimals')
+    assert.equal((await tokenExchange.totalSupply()) == 0,true,'token supply should be 0')
+    assert.equal((await  tokenExchange.tokenAddress()) == tokenContract.address,true,'token address should be the same')
+    assert.equal((await tokenExchange.factoryAddress()) == factory.address,true,'factory address should be the same')
+    assert.equal((await web3.eth.getBalance(tokenExchange.address)) == 0,true,'eth balance should be zero')
+    assert.equal((await tokenExchange.balanceOf(tokenExchange.address)) == 0 ,true,'token balance should be zero')      
 
     //mint 1500000000 tokens
-    await tokenContract.mint(bob, 1500000000);
+    await tokenContract.mint(bob, web3.utils.toWei("1.5"));
 
     //approve token for exchangeAddress
-    await tokenContract.approve(exchangeAddress, 1500000000, { from: bob });
+    await tokenContract.approve(tokenExchange.address, web3.utils.toWei("1.5"), { from: bob });
 
     //get block timestamp
-    let block = await web3.eth.getBlockNumber();
-    let blockInfo = await web3.eth.getBlock(block);
-    console.log(blockInfo.timestamp);
+    let blockInfo = await web3.eth.getBlock(await web3.eth.getBlockNumber());
 
-    let token_exchange = await UniswapExchange.at(exchangeAddress);
-
-    let t1 = (await token_exchange.decimals()) == 18;
-    let t2 = (await token_exchange.totalSupply()) == 0;
-    let t3 = (await token_exchange.tokenAddress()) == tokenContract.address;
-    let t4 = (await token_exchange.factoryAddress()) == factory.address;
-    let t5 = (await web3.eth.getBalance(token_exchange.address)) == 0;
-    let t6 = (await token_exchange.balanceOf(token_exchange.address)) == 0;
-
-    console.log({ t1, t2, t3, t4, t5, t6 });
-
-    console.log("token_exchange.address");
-    console.log(token_exchange.address);
-
-    await token_exchange.addLiquidity(
+    //add liquidity
+    await tokenExchange.addLiquidity(
       0,
-      1000000000,
+      web3.utils.toWei("1"),
       blockInfo.timestamp + 300,
-      { value: 5 * 10 ** 18, from: bob, gasLimit: 200000 }
+      { value: web3.utils.toWei("1"), from: bob, gasLimit: 200000 }
     );
 
     //check tokens after
-    let tokenCount = await tokenContract.balanceOf(token_exchange.address);
+    let tokenCount = await tokenContract.balanceOf(tokenExchange.address);
     assert.equal(
-      Number(tokenCount.toString()) == 1000000000,
+      Number(tokenCount.toString()) == web3.utils.toWei("1"),
       true,
-      "token value should be 1000000000"
+      "token value should be 1 eth"
     );
 
-    token_exchange_address = token_exchange.address;
-
     assert.equal(
-      (await factory.getToken(token_exchange.address)) == tokenContract.address,
+      (await factory.getToken(tokenExchange.address)) == tokenContract.address,
       true,
       "should have same token address"
     );
@@ -98,23 +86,31 @@ contract("Uniswap Tests", async accounts => {
 
   it("setup uniswap demo", async () => {
     //launch uniswap demo
-
     let UniswapDemoInstance = await UniswapDemo.new(factory.address);
 
-    let tokenCount0 = await tokenContract.balanceOf(alice);
-    console.log(tokenCount0.toString());
+    //check token address
+    let checkTokenAddress = await UniswapDemoInstance.checkTokenAddress(
+      tokenContract.address
+    );
+    assert(checkTokenAddress==tokenContract.address, true, 'token address is the same')
 
-    //run function //uint256 _amountEther, address _targetCurrency
-    await UniswapDemoInstance.swapEtherToERC20(
-      10000000,
-      tokenContract.address,
-      {
-        from: alice,
-        value: 10000000
-      }
+    //mint tokens
+    await tokenContract.mint(bob, web3.utils.toWei("0.1"));
+
+    //approve token for 
+    await tokenContract.approve(tokenExchange.address, web3.utils.toWei("0.1"), { from: bob });
+
+    let tokenCount0 = await tokenContract.balanceOf(bob);
+
+    //swap tokens for eth
+    let tx = await UniswapDemoInstance.testTokenToEth(
+      tokenContract.address,web3.utils.toWei("0.1"), { from: bob }
     );
 
-    let tokenCount1 = await tokenContract.balanceOf(alice);
-    console.log(tokenCount1.toString());
+    console.log({tx})
+
+    let tokenCount1 = await tokenContract.balanceOf(bob);
+
+    assert(tokenCount0 > tokenCount1, true, 'bob should have less tokens')  
   });
 });
