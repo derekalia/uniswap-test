@@ -36,7 +36,9 @@ contract UniswapDemo {
         uint256 min_tokens = 1;
         uint256 deadline = now + 3000;        
 
-        uint256 amountReceived_ = exchange.tokenToEthTransferInput(tokens_sold, min_tokens, deadline, address(this));
-        return amountReceived_;
+
+
+        exchange.tokenToEthTransferInput(tokens_sold, min_tokens, deadline, address(this));
+        return 777;
     }
 }
