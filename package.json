@@ -20,7 +20,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@openzeppelin/contracts": "^2.3.0",
+    "@openzeppelin/contracts": "^4.4.2",
     "eslint-config-mocha": "0.0.0",
     "eslint-config-standard": "^13.0.1",
     "solc": "^0.5.10",
